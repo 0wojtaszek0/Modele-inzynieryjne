@@ -1,0 +1,202 @@
+================================================================================
+  EGEA SUSPENSION TESTER - INSTRUKCJA OBSŁUGI
+================================================================================
+
+1. INSTALACJA
+=============
+
+1.1. Upewnij się, że masz zainstalowanego Pythona 3.8 lub wyższego:
+     python3 --version
+
+1.2. Zainstaluj wymagane biblioteki:
+     pip install -r requirements.txt
+
+     Lub ręcznie:
+     pip install streamlit numpy pandas plotly scipy matplotlib
+
+
+2. URUCHOMIENIE APLIKACJI
+==========================
+
+2.1. Otwórz terminal w katalogu projektu:
+     cd "/ścieżka/do/Aplikacja_EGEA"
+
+2.2. Uruchom aplikację:
+     streamlit run app.py
+
+2.3. Aplikacja otworzy się automatycznie w przeglądarce na:
+     http://localhost:8501
+
+     Jeśli się nie otworzy, skopiuj link z terminala do przeglądarki.
+
+
+3. INTERFEJS APLIKACJI
+======================
+
+3.1. PASEK BOCZNY (lewo):
+   - Wybór trybu pracy: "Symulacja" lub "Import Danych"
+   
+   TRYB SYMULACJI:
+   - Parametry modelu Quarter-Car (masa, sztywność, tłumienie)
+   - Amplituda wymuszenia (domyślnie 3 mm)
+   - Częstotliwość próbkowania (domyślnie 10 kHz)
+   - Przycisk "Uruchom Symulację"
+   
+   TRYB IMPORTU DANYCH:
+   - Wgrywanie pliku CSV
+   - Podanie siły statycznej (F_st)
+   - Przycisk "Analizuj Dane"
+
+3.2. GŁÓWNA ZAWARTOŚĆ (prawo):
+   - Metryki: F_st, EUSAMA Index, RFA_max, liczba cykli
+   - 4 zakładki (TAB):
+     1. WYKRESY - Wizualizacja przebiegów
+     2. ANALIZA - Szczegółowe wskaźniki
+     3. PARAMETRY - Norma EGEA
+     4. RAPORTY - Export wyników
+
+
+4. MODE - SYMULACJA
+===================
+
+4.1. Parametry domyślne (oparte na norze EGEA):
+   - M = 346 kg (masa resorowana)
+   - m = 36 kg (masa nieresorowana)
+   - kM = 25570 N/m (sztywność zawieszenia)
+   - km = 253161 N/m (sztywność opony)
+   - cM = 1474 N·s/m (tłumienie amortyzatora - SPRAWNY)
+   - cm = 150 N·s/m (tłumienie opony)
+   - d = 0.003 m = 3 mm (skok płyty)
+
+4.2. Zmiana parametrów:
+   - Zmień wartości w panelu bocznym
+   - Kliknij "Uruchom Symulację"
+   - Czekaj na obliczenia (kilka sekund)
+
+4.3. Interpretacja wyników:
+   - EUSAMA Index > 50% = amortyzator SPRAWNY
+   - EUSAMA Index < 50% = amortyzator ZUŻYTY
+   - RFA_max = względna amplituda względem F_st
+
+
+5. TRYB - IMPORT DANYCH
+=======================
+
+5.1. Format pliku CSV:
+   - Separator: przecinek (,) lub średnik (;)
+   - Kolumny: czas [s], siła [N], sygnał czujnika [0/1]
+   - Przykład:
+     t,F,S
+     0.000,3747,0
+     0.001,3748,0
+     0.002,3750,1
+     ...
+
+5.2. Przygotowanie danych:
+   - Eksportuj dane z urządzenia pomiarowego
+   - Upewnij się, że kolumny są w poprawnej kolejności
+   - Zapisz jako CSV
+
+5.3. Wgrywanie:
+   - Kliknij "Choose file"
+   - Wybierz plik CSV
+   - Podaj siłę statyczną (F_st) w [N]
+   - Kliknij "Analizuj Dane"
+
+
+6. WYKRESY I ANALIZA
+====================
+
+6.1. Profil Częstotliwości:
+   - Pokazuje 5 faz EGEA
+   - Żółty obszar = zakres pomiarowy (18-6 Hz)
+   - Gdzie obliczany jest wskaźnik EUSAMA
+
+6.2. Ruch Płyty i Siła:
+   - Niebieska krzywa: ruch wymuszającego płyty
+   - Pomarańczowa krzywa: siła kontaktu opony
+   - Czerwona linia przerywana: siła statyczna F_st
+
+6.3. Trajektoria Mas:
+   - Zielona krzywa: masa nieresorowana (koło)
+   - Brązowa krzywa: masa resorowana (nadwozie)
+   - Pokazuje oddzielnie każdą masę
+
+6.4. Analiza:
+   - Szczegółowe wskaźniki
+   - Tabela parametrów modelu
+
+
+7. EKSPORT WYNIKÓW
+===================
+
+7.1. Pobierz jako CSV:
+   - Kliknij przycisk "📥 Pobierz wyniki (CSV)"
+   - Plik zawiera: czas, ruch płyty, siłę, częstotliwość, trajektorie
+   - Separator: średnik (;)
+
+7.2. Raporty tekstowe:
+   - W zakładce "Raporty" widoczny raport tekstowy
+   - Można go skopiować i zapisać manualnie
+
+
+8. PARAMETRY NORMY EGEA
+======================
+
+Symbol  | Opis                          | Zakres      | Tolerancja
+--------|-------------------------------|-------------|----------
+φmin    | Min. przesunięcie fazowe      | 0-180°      | ±3° (>30°)
+F_st    | Siła statyczna koła           | 100-1100 daN| ±2%
+RFA_max | Maks. względna amplituda      | 0-100%      | ±5%
+h_PS    | Skok platformy (p-p)          | 6 mm        | ±0.3 mm
+ΔT_meas | Czas spadku f (18→6 Hz)       | 7.5 s       | ±2 Hz
+ΔT_25   | Czas stabilizacji 25 Hz       | Zmienny*    | -
+
+*ΔT_25 = F_st × 0.16 + 1200 ms
+
+
+9. TROUBLESHOOTING
+==================
+
+P: Aplikacja nie uruchamia się
+O: - Sprawdź czy masz Pythona 3.8+
+  - Zainstaluj requirement: pip install -r requirements.txt
+  - Spróbuj: streamlit run app.py --logger.level=debug
+
+P: Symulacja przerywa się
+O: - Zmniejsz częstotliwość próbkowania (np. 5000 Hz)
+  - Czekaj dłużej (obliczenia mogą trwać kilka sekund)
+
+P: Pliki CSV nie wgrywają się
+O: - Sprawdź format: 3 kolumny (t, F, S)
+  - Separator to przecinek lub średnik
+  - Brak nagłówka lub z nagłówkiem - oboje OK
+
+P: Wykresy są puste
+O: - Kliknij "Uruchom Symulację" lub "Analizuj Dane"
+  - Poczekaj na przetworzenie
+  - Odśwież stronę (F5)
+
+
+10. PLIKI PROJEKTU
+==================
+
+app.py                  - Główna aplikacja (NOWA, ulepszona)
+app_old.py              - Stara wersja (archiwum)
+egea_suspension_model.py- Model bazowy (referencja)
+requirements.txt        - Zależności Python
+README.md               - Dokumentacja techniczna
+INSTRUKCJA.txt          - Ta instrukcja
+
+
+11. KONTAKT I WSPARCIE
+======================
+
+Dokumentacja normy EGEA: 08 EGEA Suspension Tester Specifications FINAL.pdf
+
+Model fizyczny bazuje na publikacji z parametrami rzeczywistymi pojazdu
+kategorii M1 (osobowe) wg dyrektywy EGEA.
+
+================================================================================
+Wersja: 2.0 | Data: 2024-05-27 | Status: Production Ready ✅
+================================================================================
