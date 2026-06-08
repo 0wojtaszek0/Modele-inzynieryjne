@@ -1,0 +1,131 @@
+================================================================================
+  STANOWISKO EGEA – DIAGNOSTYKA ZAWIESZENIA  –  INSTRUKCJA OBSŁUGI
+================================================================================
+
+Wersja 3.0  |  Aplikacja zgodna ze specyfikacją EGEA SPECSUS2018
+
+--------------------------------------------------------------------------------
+1. INSTALACJA
+--------------------------------------------------------------------------------
+
+1.1. Wymagany Python 3.9 lub nowszy.
+     Sprawdzenie:  python3 --version
+
+1.2. Instalacja zależności:
+     pip install -r requirements.txt
+
+1.3. Lista wymaganych pakietów (requirements.txt):
+     - streamlit  – interfejs webowy
+     - numpy      – obliczenia numeryczne
+     - scipy      – całkowanie ODE, filtracja sygnałów
+     - pandas     – obsługa danych tabelarycznych
+     - plotly     – interaktywne wykresy
+
+--------------------------------------------------------------------------------
+2. URUCHOMIENIE APLIKACJI
+--------------------------------------------------------------------------------
+
+2.1. W terminalu:
+     streamlit run app.py
+
+2.2. Aplikacja otworzy się w przeglądarce pod adresem:
+     http://localhost:8501
+
+--------------------------------------------------------------------------------
+3. TRYBY PRACY
+--------------------------------------------------------------------------------
+
+3.1. SYMULACJA 2DOF (model ćwiartkowy)
+     - Pełna symulacja stanowiska EGEA.
+     - Konfigurowalne parametry: M, m, kM, km, cM, cm, d, mp, fs.
+     - Wynikiem są wszystkie wskaźniki EGEA: phi_min, EUSAMA, RFA_max,
+       H25, fres, rig.
+
+3.2. IMPORT POMIARU (CSV)
+     - Wczytanie rzeczywistego pomiaru w formacie t, F, S.
+     - F_st może być wyznaczone automatycznie (średnia z pierwszych 0.5 s).
+     - Pełna procedura MinPhraseShift zgodna z rozdz. 3.7–3.22 normy.
+
+3.3. ANALIZA phi_min(c)
+     - Wykorzystuje model jednomasowy (1DOF):
+         m*x'' + c*(x' - z') + k*(x - z) = 0
+         z(t) = -d*cos(omega*t)
+     - Dla wybranego zakresu c wyznacza wykres phi_min(c) oraz rodzinę
+       krzywych phi(f).
+
+--------------------------------------------------------------------------------
+4. FORMAT PLIKU CSV
+--------------------------------------------------------------------------------
+
+Wymagane 3 kolumny:
+   t  – czas [s]
+   F  – siła kontaktu opony F(t) [N]
+   S  – sygnał czujnika płyty (0/1) – jedynka w chwilach ST_i (TOP)
+
+Przykład:
+   t,F,S
+   0.000,4506.9,1
+   0.001,4501.1,0
+   ...
+
+Separator może być przecinkiem (,) lub średnikiem (;).
+Aplikacja akceptuje też pliki bez nagłówka (przyjmie kolejność t, F, S).
+
+--------------------------------------------------------------------------------
+5. INTERPRETACJA WYNIKÓW
+--------------------------------------------------------------------------------
+
+phi_min >= 35°  →  amortyzator SPRAWNY (kryterium AC_phi_min wg rozdz. 5.5)
+25° <= phi_min < 35°  →  stan graniczny, powtórzyć pomiar
+phi_min < 25°  →  amortyzator NIESPRAWNY, wskazana wymiana
+
+Tolerancje (rozdz. 6.1.4):
+   ±3° dla phi_min > 30°
+   liniowo do ±6° przy phi_min = 0°
+
+--------------------------------------------------------------------------------
+6. PLIKI PROJEKTU
+--------------------------------------------------------------------------------
+
+app.py                      – główna aplikacja Streamlit
+egea_suspension_model.py    – modele 2DOF i 1DOF + funkcja częstotliwości
+phase_shift.py              – algorytm phi(i) i phi_min wg EGEA
+example_measurement.csv     – przykładowy pomiar
+index.html                  – dokumentacja techniczna w przeglądarce
+style.css / main.js         – stylizacja dokumentacji
+
+--------------------------------------------------------------------------------
+7. ROZWIĄZYWANIE PROBLEMÓW
+--------------------------------------------------------------------------------
+
+P: Symulacja trwa długo.
+O: Zmniejsz częstotliwość próbkowania (np. 1000 Hz zamiast 10000 Hz).
+   Algorytm jest stabilny dla fs >= 500 Hz.
+
+P: Aplikacja zwraca phi_min = NaN.
+O: - Sprawdź czy kolumna S zawiera jedynki w momentach początków cykli.
+   - Sprawdź czy F_st jest poprawnie wyznaczony (przed startem testu).
+   - Zwiększ częstotliwość próbkowania pomiaru (Nyquist >= 2·18 = 36 Hz).
+
+P: Wyniki phi_min są nieoczekiwane.
+O: - Sprawdź konwencję ST_i – w realnym sprzęcie ST powinno być oznaczone
+     w pobliżu TOP płyty.
+   - Jeśli masz tylko sygnał F(t) bez S, aplikacja nie wyznaczy phi_min
+     metodą okresową – w tym przypadku tylko amplitudowe wskaźniki.
+
+--------------------------------------------------------------------------------
+8. PODSTAWY TEORETYCZNE
+--------------------------------------------------------------------------------
+
+Metoda minimalnego przesunięcia fazowego (MPS) została opracowana przez
+A. Tsymberowa (SAE 960735, 1996) jako rozszerzenie metody EUSAMA. Zalety:
+- nieniszcząca diagnostyka bez demontażu amortyzatora,
+- silna korelacja z rzeczywistym stanem tłumienia,
+- odporność na zmianę nacisku statycznego.
+
+W normie EGEA pomiar wykonuje się w zakresie 18–6 Hz, gdzie odpowiedź
+fazowa jest najbardziej czuła na zmiany c_M.
+
+================================================================================
+Wersja: 3.0  |  Data: czerwiec 2026  |  Status: zgodna z EGEA SPECSUS2018
+================================================================================
