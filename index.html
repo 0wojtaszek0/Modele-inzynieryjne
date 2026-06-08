@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stanowisko EGEA – Dokumentacja Techniczna</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+    };
+  </script>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-grid-bg"></div>
+    <nav class="nav">
+      <span class="nav-logo">EGEA<span class="nav-logo-accent">.</span></span>
+      <ul class="nav-links">
+        <li><a href="#wprowadzenie">Wprowadzenie</a></li>
+        <li><a href="#model">Model</a></li>
+        <li><a href="#procedura">Procedura</a></li>
+        <li><a href="#wskazniki">Wskaźniki</a></li>
+        <li><a href="#instrukcja">Instrukcja</a></li>
+      </ul>
+      <a href="https://modele-inzynieryjne.streamlit.app" target="_blank" rel="noopener noreferrer" class="nav-cta">Uruchom →</a>
+    </nav>
+
+    <div class="hero-content">
+      <div class="hero-badge">v3.0 · SPECSUS2018 · MinPhaseShift</div>
+      <h1 class="hero-title">
+        Diagnostyka<br/>
+        <span class="hero-title-accent">Zawieszenia</span><br/>
+        Pojazdu
+      </h1>
+      <p class="hero-sub">
+        Implementacja metody minimalnego przesunięcia fazowego φ<sub>min</sub><br/>
+        wg normy EGEA SPECSUS2018. Model ćwiartkowy 2DOF · 1DOF · Analiza CSV.
+      </p>
+      <div class="hero-actions">
+        <a href="https://modele-inzynieryjne.streamlit.app" target="_blank" rel="noopener noreferrer" class="btn-primary">Otwórz aplikację →</a>
+        <a href="#procedura" class="btn-ghost">Procedura pomiarowa</a>
+        <a href="#model" class="btn-ghost">Model matematyczny</a>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-card">
+        <span class="stat-num">2-DOF</span>
+        <span class="stat-label">Model ćwiartkowy</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">5</span>
+        <span class="stat-label">Faz pomiaru</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">25–6 Hz</span>
+        <span class="stat-label">Zakres częstotliwości</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-num">35°</span>
+        <span class="stat-label">AC<sub>φmin</sub></span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- WPROWADZENIE -->
+    <section class="section section-features" id="wprowadzenie">
+      <div class="container">
+        <div class="section-label">Wprowadzenie</div>
+        <h2 class="section-title">Trzy tryby pracy aplikacji</h2>
+        <p class="section-desc">
+          Aplikacja realizuje pełną procedurę badania amortyzatorów wg normy
+          europejskiej EGEA SPECSUS2018, opartej o metodę minimalnego przesunięcia
+          fazowego (Tsymberov, SAE 960735, 1996).
+        </p>
+
+        <div class="modes-grid">
+          <div class="mode-card mode-sim">
+            <div class="mode-tag">Symulacja 2DOF</div>
+            <h3>Model ćwiartkowy</h3>
+            <p>Pełna symulacja stanowiska wg normy: rozruch 0→25 Hz, stabilizacja 25 Hz,
+              rampa pomiarowa 18→6 Hz, wygaszenie 6→0 Hz.</p>
+            <ul class="mode-list">
+              <li>Numeryczne całkowanie ODE (LSODA / odeint)</li>
+              <li>Konfigurowalne M, m, k<sub>M</sub>, k<sub>m</sub>, c<sub>M</sub>, c<sub>m</sub></li>
+              <li>Pełna procedura kalibracji dynamicznej płyty</li>
+              <li>Eksport CSV i raport tekstowy</li>
+            </ul>
+          </div>
+          <div class="mode-card mode-import">
+            <div class="mode-tag">Import CSV</div>
+            <h3>Analiza rzeczywistego pomiaru</h3>
+            <p>Wczytanie pliku CSV z kolumnami <code>t, F, S</code> i wyznaczenie
+              φ<sub>min</sub> wg pełnej procedury MinPhaseShift z normy SPECSUS2018.</p>
+            <ul class="mode-list">
+              <li>Detekcja ST<sub>i</sub> z sygnału S(t)</li>
+              <li>Filtracja Butterworth bez przesunięcia fazowego</li>
+              <li>Wyznaczenie F<sub>ref</sub>(i) i TOP<sub>p</sub>(i)</li>
+              <li>Automatyczne F<sub>st</sub> z fazy pre-test</li>
+            </ul>
+          </div>
+          <div class="mode-card mode-sim">
+            <div class="mode-tag">Analiza φ(c)</div>
+            <h3>Model 1DOF parametryczny</h3>
+            <p>Analiza zależności minimalnego przesunięcia fazowego od współczynnika
+              tłumienia c. Rozwiązanie analityczne stanu ustalonego.</p>
+            <ul class="mode-list">
+              <li>Zakres c definiowany przez użytkownika</li>
+              <li>Wykres φ<sub>min</sub>(c) i rodzina φ(f)</li>
+              <li>Wyznaczenie granicy sprawności c<sub>krit</sub></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODEL MATEMATYCZNY -->
+    <section class="section section-model" id="model">
+      <div class="container">
+        <div class="section-label">Model matematyczny</div>
+        <h2 class="section-title">Model ćwiartkowy (2 stopnie swobody)</h2>
+        <p class="section-desc">
+          Pojazd modelowany jest jako dwa ciała sztywne: masa resorowana M
+          (nadwozie) oraz masa nieresorowana m (koło z piastą). Połączone są
+          przez zawieszenie (sprężyna k<sub>M</sub>, tłumik c<sub>M</sub>). Opona
+          o sztywności k<sub>m</sub> i tłumieniu c<sub>m</sub> styka się z płytą.
+        </p>
+
+        <h3 class="sub-title">Równania ruchu</h3>
+        <div class="equations-block">
+          <div class="eq-card">
+            <div class="eq-label">Masa nieresorowana (koło)</div>
+            <div class="eq-body">
+              $$m\,\ddot{x}_m = -(k_M+k_m)\,x_m + k_M\,x_M - (c_M+c_m)\,\dot{x}_m + c_M\,\dot{x}_M + k_m\,z(t) + c_m\,\dot{z}(t)$$
+            </div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Masa resorowana (nadwozie)</div>
+            <div class="eq-body">
+              $$M\,\ddot{x}_M = k_M\,x_m - k_M\,x_M + c_M\,\dot{x}_m - c_M\,\dot{x}_M$$
+            </div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Wymuszenie kinematyczne płyty</div>
+            <div class="eq-body">
+              $$z(t) = d\,\cos(\theta(t)),\quad \theta(t) = \int_0^t 2\pi f(\tau)\,d\tau$$
+              <span class="eq-note">d = 3 mm (peak-to-peak h<sub>PS</sub> = 6 mm)</span>
+            </div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Pionowa siła kontaktu opony (rozdz. 3.6)</div>
+            <div class="eq-body">
+              $$F(t) = F_{st} + k_m\,(x_m - z) + c_m\,(\dot{x}_m - \dot{z})$$
+            </div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Siła płyty pustej (rozdz. 3.4)</div>
+            <div class="eq-body">
+              $$F_p(t) = m_p\,\ddot{z}(t)$$
+              <span class="eq-note">m<sub>p</sub> – masa pustej płyty</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Postać macierzowa (układ stanu)</h3>
+        <div class="eq-card eq-standalone">
+          <div class="eq-body">
+            $$\dot{\mathbf{X}} = \mathbf{A}\,\mathbf{X} + \mathbf{B}(t),\quad
+              \mathbf{X} = [x_m,\,x_M,\,\dot{x}_m,\,\dot{x}_M]^\mathsf{T}$$
+            $$\mathbf{A} = \begin{bmatrix}
+              0 & 0 & 1 & 0 \\
+              0 & 0 & 0 & 1 \\
+              -\tfrac{k_m+k_M}{m} & \tfrac{k_M}{m} & -\tfrac{c_m+c_M}{m} & \tfrac{c_M}{m} \\
+              \tfrac{k_M}{M} & -\tfrac{k_M}{M} & \tfrac{c_M}{M} & -\tfrac{c_M}{M}
+            \end{bmatrix},\qquad
+            \mathbf{B}(t) = \begin{bmatrix} 0 \\ 0 \\ \tfrac{k_m\,z(t)+c_m\,\dot{z}(t)}{m} \\ 0 \end{bmatrix}$$
+          </div>
+        </div>
+
+        <h3 class="sub-title">Domyślne parametry pojazdu (oś przednia M1)</h3>
+        <div class="params-grid">
+          <div class="param-row header-row">
+            <span>Parametr</span><span>Opis</span><span>Wartość</span><span>Jednostka</span>
+          </div>
+          <div class="param-row"><span class="param-sym">M</span><span>Masa resorowana (nadwozie)</span><span class="param-val">346</span><span class="param-unit">kg</span></div>
+          <div class="param-row"><span class="param-sym">m</span><span>Masa nieresorowana (koło + piasta)</span><span class="param-val">36</span><span class="param-unit">kg</span></div>
+          <div class="param-row"><span class="param-sym">k<sub>M</sub></span><span>Sztywność zawieszenia</span><span class="param-val">25 570</span><span class="param-unit">N/m</span></div>
+          <div class="param-row"><span class="param-sym">k<sub>m</sub></span><span>Sztywność opony</span><span class="param-val">253 161</span><span class="param-unit">N/m</span></div>
+          <div class="param-row"><span class="param-sym">c<sub>M</sub></span><span>Tłumienie amortyzatora (sprawny)</span><span class="param-val">1 474</span><span class="param-unit">N·s/m</span></div>
+          <div class="param-row"><span class="param-sym">c<sub>m</sub></span><span>Tłumienie opony</span><span class="param-val">150</span><span class="param-unit">N·s/m</span></div>
+          <div class="param-row"><span class="param-sym">d</span><span>Amplituda wymuszenia (połowa h<sub>PS</sub>)</span><span class="param-val">0.003</span><span class="param-unit">m</span></div>
+          <div class="param-row"><span class="param-sym">m<sub>p</sub></span><span>Masa pustej płyty</span><span class="param-val">20</span><span class="param-unit">kg</span></div>
+          <div class="param-row"><span class="param-sym">F<sub>st</sub></span><span>Statyczna siła nacisku koła</span><span class="param-val">3 747</span><span class="param-unit">N</span></div>
+        </div>
+
+        <h3 class="sub-title">Model jednomasowy (1DOF) – analiza φ<sub>min</sub>(c)</h3>
+        <p class="section-desc">
+          Do badania zależności minimalnego przesunięcia fazowego od tłumienia
+          stosujemy uproszczony model jednomasowy. Pozwala on na analityczne
+          wyznaczenie odpowiedzi ustalonej i nadaje się do szybkiej analizy
+          parametrycznej.
+        </p>
+        <div class="eq-card eq-standalone">
+          <div class="eq-body">
+            $$m\,\ddot{x} + c\,(\dot{x} - \dot{z}) + k\,(x - z) = 0,\qquad z(t) = -d\cos(\omega t)$$
+            $$\Rightarrow\quad m\,\ddot{x} + c\,\dot{x} + k\,x = c\,\dot{z} + k\,z$$
+          </div>
+        </div>
+        <p class="section-desc">
+          Rozwiązanie ustalone ma postać $x(t) = X\cos(\omega t - \varphi_x)$,
+          a siła kontaktu opony $F(t) = k(x-z) + c(\dot x-\dot z)$ jest również
+          harmoniczna o amplitudzie i fazie zależnej od c i ω. Minimum
+          przesunięcia fazowego φ między F(t) a płytą znajdujemy numerycznie
+          w przedziale 6–18 Hz.
+        </p>
+      </div>
+    </section>
+
+    <!-- PROCEDURA POMIAROWA -->
+    <section class="section section-workflow" id="procedura">
+      <div class="container">
+        <div class="section-label">Procedura pomiarowa</div>
+        <h2 class="section-title">Funkcja zmienności częstotliwości</h2>
+        <p class="section-desc">
+          Norma SPECSUS2018 (rozdz. 5.4) określa pięcio-fazowy profil zmienności
+          częstotliwości wymuszenia. Każda faza ma ściśle zdefiniowany czas
+          trwania i tolerancje.
+        </p>
+
+        <div class="phase-table">
+          <div class="phase-row phase-header">
+            <span>Faza</span><span>Opis</span><span>Czas</span><span>f [Hz]</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-num">1</span>
+            <span>Rozruch płyty</span>
+            <span>2 s</span>
+            <span class="phase-freq">2 → 25</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-num">2</span>
+            <span>Stabilizacja (pomiar H25)</span>
+            <span>ΔT<sub>25</sub> = F<sub>st</sub>·0.16 + 1200 [ms]</span>
+            <span class="phase-freq">25</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-num">3</span>
+            <span>Przejście do zakresu pomiarowego</span>
+            <span>2 s</span>
+            <span class="phase-freq">25 → 18</span>
+          </div>
+          <div class="phase-row phase-meas">
+            <span class="phase-num">4</span>
+            <span>Rampa pomiarowa (właściwy pomiar)</span>
+            <span>ΔT<sub>meas</sub> = 7.5 s</span>
+            <span class="phase-freq">18 → 6</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-num">5</span>
+            <span>Wygaszenie</span>
+            <span>3 s</span>
+            <span class="phase-freq">6 → 0</span>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Algorytm MinPhaseShift (rozdz. 3.7–3.22)</h3>
+        <div class="workflow-tabs">
+          <div class="workflow-col workflow-col-wide">
+            <div class="workflow-col-title">Etapy obliczeń</div>
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-body">
+                  <h4>Detekcja znaczników ST<sub>i</sub></h4>
+                  <p>Z sygnału S(t) (0/1) wyznaczamy momenty pierwszych jedynek
+                    w każdej grupie. ST<sub>i</sub> jest pozycją <em>nieprecyzyjnie</em>
+                    związaną z fazą cyklu płyty (rozdz. 3.8).</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-body">
+                  <h4>Macierz kalibracji ΔPeriod(i)</h4>
+                  <p>Test bez pojazdu na płycie. Dla każdego okresu mierzymy
+                    przesunięcie CalcTOP(i) − ST(i) oraz max F<sub>p</sub>(i)
+                    (rozdz. 3.9–3.10). Wynik to "kalibracyjna macierz dynamiczna".</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-body">
+                  <h4>TOP<sub>p</sub>(i) = ST(i) + ΔPeriod(i)</h4>
+                  <p>Korzystając z kalibracji odtwarzamy faktyczną chwilę
+                    najwyższego położenia płyty w teście z pojazdem (rozdz. 3.11).</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">04</div>
+                <div class="step-body">
+                  <h4>F<sub>ref</sub>(i) – środek przecięć F(t) z F<sub>st</sub></h4>
+                  <p>Szukamy par przecięć (X<sub>Fup</sub>, X<sub>Fdn</sub>) sygnału
+                    F(t) z poziomem F<sub>st</sub>, spełniających warunki marginesu
+                    RFstFMin = RFstFMax = 25%. Punktem odniesienia jest
+                    F<sub>ref</sub>(i) = (X<sub>Fup</sub> + X<sub>Fdn</sub>)/2.</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">05</div>
+                <div class="step-body">
+                  <h4>φ(i) – przesunięcie fazowe okresu</h4>
+                  <p>Dla każdego okresu:
+                    $\varphi(i) = \dfrac{2\pi\,(F_{\mathrm{ref}}(i) - TOP_p(i))}{\mathrm{Period}(i)}$
+                    Wynik sprowadzamy do zakresu [0°, 180°].</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-num">06</div>
+                <div class="step-body">
+                  <h4>φ<sub>min</sub> w zakresie 6–18 Hz</h4>
+                  <p>Minimum funkcji φ(f) w paśmie pomiarowym MinCalcFreq–MaxCalcFreq.
+                    To główny wskaźnik diagnostyczny – jego niska wartość świadczy
+                    o słabym tłumieniu (rozdz. 3.22).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Wzory amplitudowe (rozdz. 3.14–3.19)</h3>
+        <div class="equations-block">
+          <div class="eq-card">
+            <div class="eq-label">Amplituda peak-to-peak okresu i</div>
+            <div class="eq-body">$$\Delta F(i) = \max F(i) - \min F(i)$$</div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Maksymalna amplituda dynamiczna (gdy F<sub>min</sub> ≥ F<sub>UnderLim</sub>)</div>
+            <div class="eq-body">
+              $$FA_{\max} = F_{st} - F_{\min}$$
+              <span class="eq-note">F<sub>UnderLim</sub> = F<sub>st</sub>·1%/100</span>
+            </div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Względna amplituda maksymalna</div>
+            <div class="eq-body">$$RFA_{\max} = \dfrac{FA_{\max}}{F_{st}} \cdot 100\,\%$$</div>
+          </div>
+          <div class="eq-card">
+            <div class="eq-label">Sztywność opony (rozdz. 3.20)</div>
+            <div class="eq-body">
+              $$\mathrm{rig} = a_{\mathrm{rig}}\cdot\dfrac{H_{25}}{e_p} + b_{\mathrm{rig}}$$
+              <span class="eq-note">a<sub>rig</sub> = 0.571, b<sub>rig</sub> = 46, e<sub>p</sub> w mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WSKAŹNIKI DIAGNOSTYCZNE -->
+    <section class="section section-indicators" id="wskazniki">
+      <div class="container">
+        <div class="section-label">Wskaźniki diagnostyczne</div>
+        <h2 class="section-title">Kluczowe parametry oceny</h2>
+
+        <div class="kpi-grid">
+
+          <div class="kpi-card kpi-main">
+            <div class="kpi-icon">φ</div>
+            <h3>Minimalne przesunięcie fazowe</h3>
+            <p class="kpi-desc">Główny wskaźnik diagnostyczny wg normy. Wyznaczany
+              w zakresie pomiarowym 6–18 Hz.</p>
+            <div class="kpi-formula">
+              $$\varphi_{\min} = \min_{f\in[6,18]\,\mathrm{Hz}} \varphi(f)$$
+            </div>
+            <div class="kpi-ranges">
+              <div class="range range-fail">
+                <span class="range-val">&lt; 25°</span>
+                <span class="range-desc">Niesprawny – wymagana wymiana</span>
+              </div>
+              <div class="range range-warn">
+                <span class="range-val">25°–35°</span>
+                <span class="range-desc">Stan graniczny – powtórzyć pomiar</span>
+              </div>
+              <div class="range range-ok">
+                <span class="range-val">≥ 35°</span>
+                <span class="range-desc">Sprawny (AC<sub>φmin</sub>)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-icon-sm">RFA</div>
+            <h3>Względna amplituda maksymalna</h3>
+            <p class="kpi-desc">Stosunek maksymalnej amplitudy dynamicznej do
+              statycznego nacisku koła.</p>
+            <div class="kpi-formula">
+              $$RFA_{\max} = \dfrac{FA_{\max}}{F_{st}}\cdot 100\,\%$$
+            </div>
+            <div class="kpi-threshold">
+              Wyższe wartości oznaczają większą amplitudę dynamiczną. Tolerancja
+              normy: ±5% (rozdz. 6.1.4).
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-icon-sm">rig</div>
+            <h3>Sztywność opony</h3>
+            <p class="kpi-desc">Sztywność statyczna opony obliczana z amplitudy
+              H25 przy 25 Hz.</p>
+            <div class="kpi-formula">
+              $$\mathrm{rig} = 0.571\cdot\dfrac{H_{25}}{e_p} + 46$$
+            </div>
+            <div class="kpi-threshold">
+              <span class="threshold-pass">160–400 N/mm</span> – zakres normalnego ciśnienia<br/>
+              <span class="threshold-fail">&lt; 160</span> – opona niedopompowana<br/>
+              <span class="threshold-fail">&gt; 400</span> – opona przepompowana
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-icon-sm">F<sub>st</sub></div>
+            <h3>Statyczna siła nacisku</h3>
+            <p class="kpi-desc">Pionowa siła wywierana przez koło przed testem
+              (rozdz. 3.1).</p>
+            <div class="kpi-formula">
+              $$F_{st} = (M+m)\,g$$
+            </div>
+            <div class="kpi-threshold">
+              Zakres pomiarowy: 100–1100 daN. Tolerancja ±2% (≥ 300 daN) lub
+              ±6 daN (&lt; 300 daN).
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-icon-sm">f<sub>res</sub></div>
+            <h3>Częstotliwość rezonansowa</h3>
+            <p class="kpi-desc">Częstotliwość w której występuje maksymalna
+              amplituda F(t).</p>
+            <div class="kpi-formula">
+              $$f_{res} = f\big|_{t = t_{F_{\max}}}$$
+            </div>
+            <div class="kpi-threshold">
+              Typowo 12–16 Hz dla osi przedniej M1. Niska f<sub>res</sub> może
+              wskazywać na luzy zawieszenia.
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon kpi-icon-sm">EUS</div>
+            <h3>Wskaźnik EUSAMA</h3>
+            <p class="kpi-desc">Historyczny wskaźnik adhezji opony – tylko
+              informacyjnie.</p>
+            <div class="kpi-formula">
+              $$\mathrm{EUSAMA} = \dfrac{F_{\min}}{F_{st}}\cdot 100\,\%$$
+            </div>
+            <div class="kpi-threshold">
+              <span class="threshold-pass">≥ 50%</span> – sprawny<br/>
+              <span class="threshold-fail">&lt; 50%</span> – wątpliwy<br/>
+              <em>Norma EGEA bazuje na φ<sub>min</sub>, nie na EUSAMA.</em>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- TABELA PARAMETRÓW EGEA -->
+    <section class="section section-standards" id="parametry">
+      <div class="container">
+        <div class="section-label">Parametry normy</div>
+        <h2 class="section-title">Stałe konfiguracyjne SPECSUS2018</h2>
+        <p class="section-desc">
+          Wartości stałych zaszytych w aplikacji, pochodzące bezpośrednio z
+          rozdziału 9 ("Abbreviations, symbols and parameters") normy.
+        </p>
+
+        <div class="standards-table">
+          <div class="std-row std-header">
+            <span>Symbol</span><span>Wartość</span><span>Opis</span>
+          </div>
+          <div class="std-row">
+            <span>AC<sub>φmin</sub></span>
+            <span class="param-val">35°</span>
+            <span class="tol">Kryterium absolutne sprawności amortyzatora</span>
+          </div>
+          <div class="std-row">
+            <span>MaxCalcFreq</span>
+            <span class="param-val">18 Hz</span>
+            <span class="tol">Górna granica zakresu pomiarowego</span>
+          </div>
+          <div class="std-row">
+            <span>MinCalcFreq</span>
+            <span class="param-val">6 Hz</span>
+            <span class="tol">Dolna granica zakresu pomiarowego</span>
+          </div>
+          <div class="std-row">
+            <span>ΔT<sub>meas</sub></span>
+            <span class="param-val">7.5 s</span>
+            <span class="tol">Minimalny czas rampy 18→6 Hz</span>
+          </div>
+          <div class="std-row">
+            <span>ΔTfMaxSlope</span>
+            <span class="param-val">3 Hz/s</span>
+            <span class="tol">Maksymalne nachylenie zjazdu częstotliwości</span>
+          </div>
+          <div class="std-row">
+            <span>ΔTfLinErr</span>
+            <span class="param-val">2 Hz</span>
+            <span class="tol">Dopuszczalny błąd liniowości</span>
+          </div>
+          <div class="std-row">
+            <span>h<sub>PS</sub></span>
+            <span class="param-val">6 mm</span>
+            <span class="tol">Amplituda peak-to-peak płyty (±0.3 mm)</span>
+          </div>
+          <div class="std-row">
+            <span>RFstFMax / RFstFMin</span>
+            <span class="param-val">25% / 25%</span>
+            <span class="tol">Marginesy detekcji F<sub>up</sub>, F<sub>dn</sub></span>
+          </div>
+          <div class="std-row">
+            <span>FUnderLimPerc</span>
+            <span class="param-val">1%</span>
+            <span class="tol">Próg detekcji underflow F(t)</span>
+          </div>
+          <div class="std-row">
+            <span>DeltaF</span>
+            <span class="param-val">5 Hz</span>
+            <span class="tol">Margines detekcji φ<sub>min</sub> pod f<sub>res</sub></span>
+          </div>
+          <div class="std-row">
+            <span>a<sub>rig</sub></span>
+            <span class="param-val">0.571</span>
+            <span class="tol">Współczynnik liniowy wzoru sztywności opony</span>
+          </div>
+          <div class="std-row">
+            <span>b<sub>rig</sub></span>
+            <span class="param-val">46.0</span>
+            <span class="tol">Wyraz wolny wzoru sztywności opony</span>
+          </div>
+          <div class="std-row">
+            <span>rigLoLim / rigHiLim</span>
+            <span class="param-val">160 / 400 N/mm</span>
+            <span class="tol">Granice ostrzeżenia o ciśnieniu opony</span>
+          </div>
+          <div class="std-row">
+            <span>StatWLim</span>
+            <span class="param-val">25 daN</span>
+            <span class="tol">Maks. zmiana F<sub>st</sub> przed/po teście</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOLERANCJE I BŁĘDY -->
+    <section class="section section-model" id="tolerancje">
+      <div class="container">
+        <div class="section-label">Niepewności</div>
+        <h2 class="section-title">Tolerancje pomiarowe (rozdz. 6.1.4)</h2>
+
+        <div class="params-grid">
+          <div class="param-row header-row">
+            <span>Wielkość</span><span>Powtarzalność</span><span>Powtarzalność (pozycja)</span><span>Błąd całkowity</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">RFA<sub>max</sub></span>
+            <span>±1.5%</span>
+            <span>±3%</span>
+            <span class="param-val">5%</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">H<sub>25</sub></span>
+            <span>±24 daN</span>
+            <span>—</span>
+            <span class="param-val">8% (> 300 daN)</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">φ<sub>min</sub> &gt; 30°</span>
+            <span>±3°</span>
+            <span>±4.5°</span>
+            <span class="param-val">7.5°</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">φ<sub>min</sub> = 0°</span>
+            <span>±6°</span>
+            <span>±9°</span>
+            <span class="param-val">15°</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">F<sub>st</sub> &lt; 300 daN</span>
+            <span>±6 daN</span>
+            <span>—</span>
+            <span class="param-val">±6 daN</span>
+          </div>
+          <div class="param-row">
+            <span class="param-sym">F<sub>st</sub> ≥ 300 daN</span>
+            <span>±2%</span>
+            <span>—</span>
+            <span class="param-val">±2%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTRUKCJA -->
+    <section class="section section-install" id="instrukcja">
+      <div class="container">
+        <div class="section-label">Instrukcja</div>
+        <h2 class="section-title">Instalacja i uruchomienie</h2>
+
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="install-num">1</div>
+            <div class="install-body">
+              <h4>Instalacja zależności</h4>
+              <div class="code-block">
+                <span class="code-prompt">$</span> pip install -r requirements.txt
+              </div>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-num">2</div>
+            <div class="install-body">
+              <h4>Uruchomienie aplikacji</h4>
+              <div class="code-block">
+                <span class="code-prompt">$</span> streamlit run app.py
+              </div>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-num">3</div>
+            <div class="install-body">
+              <h4>Otwarcie w przeglądarce</h4>
+              <div class="code-block">
+                <span class="code-prompt">→</span> http://localhost:8501
+              </div>
+              <p class="section-desc" style="margin-top:0.6rem">
+                lub bez instalacji:
+                <a href="https://modele-inzynieryjne.streamlit.app" target="_blank" rel="noopener noreferrer">
+                  modele-inzynieryjne.streamlit.app ↗
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub-title">Format pliku CSV (tryb importu)</h3>
+        <div class="code-sample">
+          <pre>t,F,S
+0.000,3747.4,1
+0.001,3741.9,0
+0.002,3820.5,0
+0.003,3846.7,0
+...
+2.345,4012.3,1   <span class="comment">← początek nowego cyklu</span>
+...</pre>
+        </div>
+        <p class="section-desc">
+          <strong>t</strong> – czas [s], <strong>F</strong> – siła kontaktu opony
+          F(t) [N], <strong>S</strong> – sygnał czujnika płyty (0/1, jedynka
+          oznacza początek cyklu ST<sub>i</sub>). Aplikacja automatycznie
+          rozpoznaje separator (przecinek lub średnik).
+        </p>
+
+        <h3 class="sub-title">Struktura projektu</h3>
+        <div class="file-tree">
+          <div class="file-row"><span class="file-name">app.py</span><span class="file-desc">aplikacja Streamlit (interfejs)</span></div>
+          <div class="file-row"><span class="file-name">egea_suspension_model.py</span><span class="file-desc">modele 2DOF i 1DOF + funkcja częstotliwości EGEA</span></div>
+          <div class="file-row"><span class="file-name">phase_shift.py</span><span class="file-desc">algorytm φ(i), φ<sub>min</sub>, kalibracja dynamiczna</span></div>
+          <div class="file-row"><span class="file-name">example_measurement.csv</span><span class="file-desc">przykładowy pomiar (t, F, S)</span></div>
+          <div class="file-row"><span class="file-name">requirements.txt</span><span class="file-desc">streamlit, numpy, scipy, pandas, plotly</span></div>
+          <div class="file-row"><span class="file-name">08 EGEA Suspension Tester Specifications FINAL.pdf</span><span class="file-desc">norma SPECSUS2018 (referencja)</span></div>
+        </div>
+
+        <div class="requirements-note">
+          Wymagany Python <strong>3.9+</strong> · Streamlit · NumPy · SciPy · Plotly · Pandas
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="footer-logo">EGEA<span>.</span></span>
+      <span class="footer-text">Stanowisko EGEA · Wersja 3.0 · Model 2DOF + 1DOF · Metoda φ<sub>min</sub></span>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
